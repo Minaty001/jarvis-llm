@@ -27,6 +27,10 @@ from middleware.auth import JWTAuthMiddleware
 from middleware.logging import RequestLoggingMiddleware
 from database.client import supabase_client
 from utils.config import settings
+from utils.redis_cache import cache
+from services.brain_client import brain_client
+from services.llm_client import llm_client
+from services.skill_executor import skill_executor
 
 # ── Structured Logger ──
 logger = structlog.get_logger()
@@ -77,6 +81,10 @@ def create_app() -> FastAPI:
             version=settings.app_version,
             environment=settings.environment,
         )
+        # Initialize Supabase database client connection
+        await supabase_client.initialize()
+        # Initialize Redis Cache connection
+        await cache.initialize()
         # Verify critical external dependencies are reachable
         await _check_dependencies()
 
@@ -85,6 +93,10 @@ def create_app() -> FastAPI:
         """Gracefully close connections on shutdown."""
         logger.info("backend_shutting_down")
         await supabase_client.close()
+        await cache.close()
+        await brain_client.close()
+        await llm_client.close()
+        await skill_executor.close()
 
     # Mount UI static files at root
     static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")

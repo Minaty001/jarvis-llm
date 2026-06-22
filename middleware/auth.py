@@ -124,6 +124,11 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             return True
         if path.startswith(PUBLIC_PATH_PREFIXES):
             return True
+        # Allow root and static assets publicly
+        if path == "/":
+            return True
+        if path.endswith((".html", ".css", ".js", ".ico", ".png", ".jpg", ".jpeg", ".svg", ".map")):
+            return True
         return False
 
     def _extract_token(self, request: Request) -> Optional[str]:

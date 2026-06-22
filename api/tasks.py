@@ -109,8 +109,8 @@ async def list_tasks(
 
 @router.get("/{task_id}", response_model=SuccessResponse[TaskResponse])
 async def get_task(
+    request: Request,
     task_id: UUID = Path(...),
-    request: Request = None,
 ):
     """
     Get detailed information about a specific task.
@@ -147,8 +147,8 @@ async def get_task(
 
 @router.delete("/{task_id}")
 async def cancel_task(
+    request: Request,
     task_id: UUID = Path(...),
-    request: Request = None,
 ):
     """
     Cancel a pending or running task.

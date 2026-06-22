@@ -183,8 +183,8 @@ async def list_conversations(
 
 @router.get("/conversations/{conversation_id}", response_model=SuccessResponse[ConversationDetail])
 async def get_conversation(
+    request: Request,
     conversation_id: UUID = Path(...),
-    request: Request = None,
 ):
     """
     Get a conversation with all its messages.
@@ -279,8 +279,8 @@ async def create_conversation(
 
 @router.delete("/conversations/{conversation_id}")
 async def delete_conversation(
+    request: Request,
     conversation_id: UUID = Path(...),
-    request: Request = None,
 ):
     """
     Delete a conversation and all its messages.

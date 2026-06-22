@@ -15,6 +15,7 @@ from schemas.command import (
     CommandResponse,
 )
 from schemas.common import ErrorResponse, SuccessResponse
+from schemas.task import TaskStatus
 from services.skill_executor import skill_executor
 from services.task_manager import task_manager
 
@@ -55,7 +56,7 @@ async def execute_command(request_body: CommandRequest, http_request: Request):
         )
 
         # Update status to RUNNING and dispatch to Skill Engine
-        await task_manager.update_status(task.id, task_manager.VALID_TRANSITIONS[task.status].pop())
+        await task_manager.update_status(task.id, TaskStatus.RUNNING)
         # Note: In production, dispatch to a background worker here
         # For now, we just create the task and return
 

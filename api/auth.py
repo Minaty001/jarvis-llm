@@ -11,7 +11,7 @@ Flow:
     4. On logout, sessions are invalidated
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import structlog
 from fastapi import APIRouter, Request
@@ -112,9 +112,7 @@ async def login(request: LoginRequest, http_request: Request):
     # Generate tokens
     access_token = create_access_token(device_id, user_id)
     refresh_token = create_refresh_token(device_id, user_id)
-    expires_at = datetime.now(timezone.utc).replace(
-        hour=(datetime.now(timezone.utc).hour + settings.jwt_expiry_hours) % 24
-    )
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expiry_hours)
 
     # Store session
     client_host = http_request.client.host if http_request.client else "unknown"
@@ -200,9 +198,7 @@ async def refresh(request: RefreshRequest):
             "user_id": user_id,
             "access_token": new_access,
             "refresh_token": new_refresh,
-            "expires_at": datetime.now(timezone.utc).replace(
-                hour=(datetime.now(timezone.utc).hour + settings.jwt_expiry_hours) % 24
-            ).isoformat(),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expiry_hours)).isoformat(),
         }).execute()
     except Exception as e:
         logger.warning("new_session_create_failed", error=str(e))
