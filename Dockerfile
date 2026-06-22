@@ -47,7 +47,7 @@ USER jarvis
 
 # Health check (uses PORT env var fallback)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD python -c "import os; import httpx; httpx.get(f'http://localhost:{os.environ.get(\"PORT\", \"8000\")}/health', timeout=5)"
+    CMD python -c "import os; import httpx; httpx.get(f'http://localhost:{os.environ.get(\"PORT\", \"8000\")}/api/health', timeout=5)"
 
 EXPOSE 8000
 

@@ -24,9 +24,9 @@ logger = structlog.get_logger()
 
 # Paths that do NOT require authentication
 PUBLIC_PATHS = {
-    "/auth/refresh",
-    "/health",
-    "/metrics",
+    "/api/auth/refresh",
+    "/api/health",
+    "/api/metrics",
     "/docs",
     "/redoc",
     "/openapi.json",
@@ -34,7 +34,7 @@ PUBLIC_PATHS = {
 
 # Pattern for paths that vary (e.g., trailing slashes)
 PUBLIC_PATH_PREFIXES = (
-    "/auth/refresh/",
+    "/api/auth/refresh/",
 )
 
 

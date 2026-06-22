@@ -64,12 +64,12 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestLoggingMiddleware)  # Structured request/response logs
 
     # ── Register Routers ──
-    app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-    app.include_router(chat.router, prefix="", tags=["Chat"])
-    app.include_router(command.router, prefix="/command", tags=["Commands"])
-    app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
-    app.include_router(memory.router, prefix="/memory", tags=["Memory"])
-    app.include_router(health.router, prefix="", tags=["Health"])
+    app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+    app.include_router(chat.router, prefix="/api", tags=["Chat"])
+    app.include_router(command.router, prefix="/api/command", tags=["Commands"])
+    app.include_router(tasks.router, prefix="/api/tasks", tags=["Tasks"])
+    app.include_router(memory.router, prefix="/api/memory", tags=["Memory"])
+    app.include_router(health.router, prefix="/api", tags=["Health"])
 
     # ── Lifecycle Events ──
     @app.on_event("startup")
