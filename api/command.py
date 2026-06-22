@@ -84,13 +84,23 @@ async def execute_command(request_body: CommandRequest, http_request: Request):
 
 
 @router.get("/available", response_model=SuccessResponse[AvailableCommandsResponse])
-async def list_available_commands():
+async def list_available_commands(http_request: Request):
     """
     List all available skills/commands from the Skill Engine.
+
+    Requires authentication.
 
     Returns:
         Available commands grouped by category.
     """
+    user_id = getattr(http_request.state, "user_id", None)
+    if not user_id:
+        return ErrorResponse(
+            code="UNAUTHENTICATED",
+            message="Authentication required.",
+            status_code=401,
+        )
+
     try:
         skills = await skill_executor.list_skills()
         commands = [

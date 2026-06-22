@@ -48,8 +48,8 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=settings.app_version,
         description="JARVIS Backend Gateway — receives, validates, routes, responds",
-        docs_url="/docs" if settings.environment == "development" else None,
-        redoc_url="/redoc" if settings.environment == "development" else None,
+        docs_url="/docs",
+        redoc_url="/redoc",
     )
 
     # ── Middleware Stack (order matters: first added = innermost) ──
