@@ -109,16 +109,6 @@ class Conversation(BaseModel):
     created_at: datetime
 
 
-class ConversationDetail(Conversation):
-    """
-    Full conversation details including messages.
-
-    Attributes:
-        messages: All messages in the conversation, ordered by creation time.
-    """
-    messages: List["MessageResponse"] = []
-
-
 # ── Message Models ──
 
 class MessageResponse(BaseModel):
@@ -139,3 +129,13 @@ class MessageResponse(BaseModel):
     tokens_used: Optional[int] = None
     created_at: datetime
     metadata: Optional[Dict[str, Any]] = None
+
+
+class ConversationDetail(Conversation):
+    """
+    Full conversation details including messages.
+
+    Attributes:
+        messages: All messages in the conversation, ordered by creation time.
+    """
+    messages: List["MessageResponse"] = []
