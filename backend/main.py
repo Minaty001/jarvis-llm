@@ -1,0 +1,130 @@
+"""
+JARVIS Backend Gateway - FastAPI Application Entry Point
+
+This is the traffic cop. It receives requests from the Android app,
+validates them, routes them to the appropriate service (Brain, LLM,
+Skill Engine), and returns responses. No thinking, reasoning, or
+generation happens here.
+
+Architecture:
+    Android App (Capacitor/WebView)
+        ↓
+    Backend Gateway (FastAPI) ← You Are Here
+        ├→ Brain Service (reasoning)
+        ├→ LLM API (generation)
+        ├→ Skill Engine (execution)
+        └→ Supabase (persistence)
+"""
+
+import structlog
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from api import auth, chat, command, tasks, memory, health
+from middleware.auth import JWTAuthMiddleware
+from middleware.logging import RequestLoggingMiddleware
+from database.client import supabase_client
+from utils.config import settings
+
+# ── Structured Logger ──
+logger = structlog.get_logger()
+
+
+def create_app() -> FastAPI:
+    """
+    Application factory. Creates and configures the FastAPI instance.
+
+    Returns:
+        FastAPI: Fully configured application with middleware, routers,
+                 and startup/shutdown handlers attached.
+    """
+    app = FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        description="JARVIS Backend Gateway — receives, validates, routes, responds",
+        docs_url="/docs" if settings.environment == "development" else None,
+        redoc_url="/redoc" if settings.environment == "development" else None,
+    )
+
+    # ── Middleware Stack (order matters: first added = innermost) ──
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(JWTAuthMiddleware)   # JWT validation on protected routes
+    app.add_middleware(RequestLoggingMiddleware)  # Structured request/response logs
+
+    # ── Register Routers ──
+    app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+    app.include_router(chat.router, prefix="", tags=["Chat"])
+    app.include_router(command.router, prefix="/command", tags=["Commands"])
+    app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
+    app.include_router(memory.router, prefix="/memory", tags=["Memory"])
+    app.include_router(health.router, prefix="", tags=["Health"])
+
+    # ── Lifecycle Events ──
+    @app.on_event("startup")
+    async def startup():
+        """Initialize connections and validate configuration on startup."""
+        logger.info(
+            "backend_starting",
+            app=settings.app_name,
+            version=settings.app_version,
+            environment=settings.environment,
+        )
+        # Verify critical external dependencies are reachable
+        await _check_dependencies()
+
+    @app.on_event("shutdown")
+    async def shutdown():
+        """Gracefully close connections on shutdown."""
+        logger.info("backend_shutting_down")
+        await supabase_client.close()
+
+    return app
+
+
+async def _check_dependencies():
+    """
+    Verify that critical external services are reachable at startup.
+
+    Logs a warning for each unreachable service but does NOT prevent
+    the application from starting — individual endpoints handle timeouts.
+    """
+    import httpx
+
+    services = {
+        "Brain": settings.brain_url,
+        "LLM": settings.llm_url,
+        "Skill": settings.skill_url,
+    }
+
+    async with httpx.AsyncClient() as client:
+        for name, url in services.items():
+            try:
+                resp = await client.get(f"{url}/health", timeout=5.0)
+                if resp.status_code == 200:
+                    logger.info("dependency_healthy", service=name, url=url)
+                else:
+                    logger.warning("dependency_unhealthy", service=name, url=url, status=resp.status_code)
+            except Exception as e:
+                logger.warning("dependency_unreachable", service=name, url=url, error=str(e))
+
+
+# ── Entry Point ──
+app = create_app()
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.environment == "development",
+        log_level=settings.log_level.lower(),
+        workers=1 if settings.environment == "development" else settings.workers,
+    )

@@ -1,0 +1,60 @@
+# JARVIS Backend - Local Development
+# Start: docker compose up --build
+
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jarvis-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - PORT=8000
+      - HOST=0.0.0.0
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-that-is-at-least-32-chars!!}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRY_HOURS=24
+      - REFRESH_TOKEN_EXPIRY_DAYS=7
+      - BRAIN_URL=http://brain:8001
+      - BRAIN_TIMEOUT=30
+      - LLM_URL=http://llm:8002
+      - LLM_TIMEOUT=60
+      - SKILL_URL=http://skill:8003
+      - SKILL_TIMEOUT=120
+      - SUPABASE_URL=${SUPABASE_URL:-https://your-project.supabase.co}
+      - SUPABASE_API_KEY=${SUPABASE_API_KEY:-your-anon-key}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:-your-service-key}
+      - LOG_LEVEL=DEBUG
+      - LOG_FILE=/app/logs/app.log
+    volumes:
+      - ./:/app
+      - ./logs:/app/logs
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+    restart: unless-stopped
+    networks:
+      - jarvis-net
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: jarvis-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - jarvis-net
+
+networks:
+  jarvis-net:
+    driver: bridge
+
+volumes:
+  redis-data:
