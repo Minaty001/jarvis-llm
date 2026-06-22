@@ -5,9 +5,7 @@ Common types used across multiple schemas: pagination parameters,
 standard error responses, and generic API response wrappers.
 """
 
-from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 

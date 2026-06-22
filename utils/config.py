@@ -10,7 +10,6 @@ Usage:
     print(settings.brain_url)
 """
 
-import os
 from typing import List, Optional
 from typing_extensions import Literal
 

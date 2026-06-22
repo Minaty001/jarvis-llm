@@ -67,7 +67,6 @@ async def service_status():
     Returns response time and error details for each service.
     Useful for debugging connectivity issues.
     """
-    import asyncio
     from datetime import datetime, timezone
 
     brain_start = time.time()
@@ -110,7 +109,8 @@ async def metrics():
     Returns:
         str: Prometheus-compatible metrics.
     """
-    import os, platform
+    import os
+    import platform
 
     uptime = time.time() - APP_START_TIME
     pid = os.getpid()

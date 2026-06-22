@@ -5,7 +5,6 @@ Helper functions for validating inputs beyond what Pydantic provides.
 """
 
 import re
-from typing import Optional
 
 
 # UUID v4 regex pattern

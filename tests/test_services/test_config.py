@@ -3,7 +3,6 @@ Tests for Configuration Validation.
 """
 
 import pytest
-from pydantic import ValidationError
 
 
 class TestConfigValidation:

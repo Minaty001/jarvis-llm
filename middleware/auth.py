@@ -9,7 +9,6 @@ Routes are classified as:
     - Protected: JWT validation required.
 """
 
-import re
 from typing import Optional
 
 import structlog

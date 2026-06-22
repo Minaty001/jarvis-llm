@@ -4,7 +4,6 @@ Tests for Authentication API Endpoints.
 
 import pytest
 from httpx import AsyncClient, ASGITransport
-from unittest.mock import patch, MagicMock, AsyncMock
 
 # We'll test the auth endpoints by mocking the database client
 

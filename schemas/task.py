@@ -7,7 +7,7 @@ for task management endpoints.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field

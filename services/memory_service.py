@@ -6,8 +6,7 @@ Supports storing facts, preferences, context, and history entries
 with optional semantic search via embeddings.
 """
 
-from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 import structlog

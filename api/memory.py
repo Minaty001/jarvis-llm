@@ -9,9 +9,8 @@ import structlog
 from fastapi import APIRouter, Query, Request
 from uuid import UUID
 
-from database.client import supabase_client
 from schemas.common import ErrorResponse, PaginatedResponse, SuccessResponse
-from schemas.memory import MemoryResponse, MemorySearchRequest, MemoryStoreRequest
+from schemas.memory import MemoryResponse, MemoryStoreRequest
 from services.memory_service import memory_service
 
 logger = structlog.get_logger()

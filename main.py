@@ -19,6 +19,8 @@ Architecture:
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 
 from api import auth, chat, command, tasks, memory, health
 from middleware.auth import JWTAuthMiddleware
@@ -83,6 +85,10 @@ def create_app() -> FastAPI:
         """Gracefully close connections on shutdown."""
         logger.info("backend_shutting_down")
         await supabase_client.close()
+
+    # Mount UI static files at root
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
     return app
 

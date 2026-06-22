@@ -7,7 +7,7 @@ validates, routes, and returns responses.
 """
 
 import structlog
-from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi import APIRouter, Path, Query, Request
 from uuid import UUID
 
 from database.client import supabase_client
@@ -17,10 +17,9 @@ from schemas.chat import (
     Conversation,
     ConversationCreate,
     ConversationDetail,
-    ConversationUpdate,
     MessageResponse,
 )
-from schemas.common import ErrorResponse, PaginatedResponse, PaginationParams, SuccessResponse
+from schemas.common import ErrorResponse, PaginatedResponse, SuccessResponse
 from services.brain_client import brain_client
 
 logger = structlog.get_logger()

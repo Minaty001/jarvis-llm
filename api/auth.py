@@ -12,10 +12,9 @@ Flow:
 """
 
 from datetime import datetime, timezone
-from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from database.client import supabase_client
@@ -25,7 +24,6 @@ from utils.jwt_handler import (
     create_access_token,
     create_refresh_token,
     decode_token,
-    get_user_id_from_token,
 )
 from utils.validators import is_valid_device_id
 

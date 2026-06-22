@@ -5,7 +5,6 @@ Commonly-used parameterized queries for database operations.
 Keeps inline SQL out of service/API layers.
 """
 
-from typing import Any, Optional
 
 
 # ── User Queries ──
