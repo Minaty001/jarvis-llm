@@ -1,14 +1,9 @@
 """
 Authentication API Endpoints
 
-Handles device-based authentication using Android device IDs.
-JWT tokens are issued on login and refreshed via refresh tokens.
-
-Flow:
-    1. Device registers/logs in with device_id → gets JWT pair
-    2. Client uses access_token for subsequent requests
-    3. When access_token expires, use refresh_token to get a new pair
-    4. On logout, sessions are invalidated
+Handles token refresh, logout, and current user info.
+Device-based login (/auth/login) has been permanently removed.
+Tokens are expected to be issued externally (e.g., from Brain service).
 """
 
 from datetime import datetime, timezone, timedelta
@@ -25,7 +20,6 @@ from utils.jwt_handler import (
     create_refresh_token,
     decode_token,
 )
-from utils.validators import is_valid_device_id
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -33,23 +27,13 @@ router = APIRouter()
 
 # ── Request/Response Schemas ──
 
-class LoginRequest(BaseModel):
-    """Request body for POST /auth/login."""
-    device_id: str = Field(
-        ...,
-        min_length=1,
-        max_length=255,
-        description="Unique Android device identifier.",
-    )
-
-
 class RefreshRequest(BaseModel):
     """Request body for POST /auth/refresh."""
     refresh_token: str = Field(..., min_length=1, description="Valid refresh token.")
 
 
 class AuthTokens(BaseModel):
-    """JWT token pair returned on login/refresh."""
+    """JWT token pair returned on refresh."""
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -64,87 +48,6 @@ class UserInfo(BaseModel):
 
 
 # ── Endpoints ──
-
-@router.post("/login", response_model=SuccessResponse[AuthTokens])
-async def login(request: LoginRequest, http_request: Request):
-    """
-    Register or login a device.
-
-    If the device_id is new, a user record is created.
-    If it already exists, the existing user is looked up.
-
-    Returns a JWT access token + refresh token pair.
-    """
-    device_id = request.device_id.strip()
-
-    if not is_valid_device_id(device_id):
-        return ErrorResponse(
-            code="INVALID_DEVICE_ID",
-            message="Device ID contains invalid characters.",
-            status_code=400,
-        )
-
-    # Upsert user: create if new, return existing if known
-    try:
-        result = await supabase_client.table("users").upsert(
-            {"device_id": device_id},
-            on_conflict="device_id",
-        ).execute()
-
-        if not result.data:
-            # User didn't exist, create explicitly
-            result = await supabase_client.table("users").insert(
-                {"device_id": device_id}
-            ).execute()
-
-        user = result.data[0]
-        user_id = user["id"]
-        created = user.get("created_at")
-
-    except Exception as e:
-        logger.exception("user_upsert_failed", device_id=device_id, error=str(e))
-        return ErrorResponse(
-            code="USER_CREATE_FAILED",
-            message="Failed to register user. Please try again.",
-            status_code=500,
-        )
-
-    # Generate tokens
-    access_token = create_access_token(device_id, user_id)
-    refresh_token = create_refresh_token(device_id, user_id)
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expiry_hours)
-
-    # Store session
-    client_host = http_request.client.host if http_request.client else "unknown"
-    user_agent = http_request.headers.get("User-Agent", "unknown")
-
-    try:
-        await supabase_client.table("sessions").insert({
-            "user_id": user_id,
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "expires_at": expires_at.isoformat(),
-            "ip_address": client_host,
-            "user_agent": user_agent,
-        }).execute()
-    except Exception as e:
-        logger.warning("session_create_failed", user_id=user_id, error=str(e))
-        # Non-critical: client can still use tokens
-
-    logger.info(
-        "user_logged_in",
-        user_id=user_id,
-        device_id=device_id,
-        is_new=created is not None,
-    )
-
-    return SuccessResponse(data=AuthTokens(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        expires_in_hours=settings.jwt_expiry_hours,
-    ))
-
 
 @router.post("/refresh", response_model=SuccessResponse[AuthTokens])
 async def refresh(request: RefreshRequest):
@@ -198,7 +101,9 @@ async def refresh(request: RefreshRequest):
             "user_id": user_id,
             "access_token": new_access,
             "refresh_token": new_refresh,
-            "expires_at": (datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expiry_hours)).isoformat(),
+            "expires_at": (
+                datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expiry_hours)
+            ).isoformat(),
         }).execute()
     except Exception as e:
         logger.warning("new_session_create_failed", error=str(e))

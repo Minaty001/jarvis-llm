@@ -24,7 +24,6 @@ logger = structlog.get_logger()
 
 # Paths that do NOT require authentication
 PUBLIC_PATHS = {
-    "/auth/login",
     "/auth/refresh",
     "/health",
     "/metrics",
@@ -33,9 +32,8 @@ PUBLIC_PATHS = {
     "/openapi.json",
 }
 
-# Pattern for paths that vary by UUID (e.g., /auth/me, /tasks/{id})
+# Pattern for paths that vary (e.g., trailing slashes)
 PUBLIC_PATH_PREFIXES = (
-    "/auth/login/",
     "/auth/refresh/",
 )
 

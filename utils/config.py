@@ -51,8 +51,11 @@ class Settings(BaseSettings):
     refresh_token_expiry_days: int = 7
 
     # ── External Services ──
-    brain_url: str = "http://localhost:8001"
+    # BRAIN_URL: URL of the Brain service deployed on Render.com
+    # Example: https://jarvis-brain.onrender.com
+    brain_url: str  # Required — set via BRAIN_URL env var on Render
     brain_timeout: int = 30
+
     llm_url: str = "http://localhost:8002"
     llm_timeout: int = 60
     skill_url: str = "http://localhost:8003"
