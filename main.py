@@ -81,10 +81,21 @@ def create_app() -> FastAPI:
             version=settings.app_version,
             environment=settings.environment,
         )
+
+        # Validate configuration — log warnings but don't block startup
+        config_issues = settings.validate()
+        for msg in config_issues:
+            logger.warning("config_issue", detail=msg)
+
         # Initialize Supabase database client connection
-        await supabase_client.initialize()
+        if settings.supabase_url and settings.supabase_api_key:
+            await supabase_client.initialize()
+        else:
+            logger.warning("supabase_not_configured", detail="Supabase credentials missing — database features disabled")
+
         # Initialize Redis Cache connection
         await cache.initialize()
+
         # Verify critical external dependencies are reachable
         await _check_dependencies()
 

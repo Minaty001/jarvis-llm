@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     ]
 
     # ── Security ──
-    jwt_secret: str
+    jwt_secret: Optional[str] = None
     jwt_algorithm: str = "HS256"
     jwt_expiry_hours: int = 24
     refresh_token_expiry_days: int = 7
@@ -62,9 +62,9 @@ class Settings(BaseSettings):
     skill_timeout: int = 120
 
     # ── Supabase ──
-    supabase_url: str
-    supabase_api_key: str
-    supabase_service_key: str
+    supabase_url: Optional[str] = None
+    supabase_api_key: Optional[str] = None
+    supabase_service_key: Optional[str] = None
 
     # ── Logging ──
     log_level: str = "INFO"
@@ -80,39 +80,50 @@ class Settings(BaseSettings):
         case_sensitive = False
         extra = "ignore"  # Ignore extra env vars
 
-    def validate(self) -> None:
+    def validate(self) -> List[str]:
         """
         Validate critical configuration at startup.
 
-        Raises:
-            ValueError: If required security or connectivity values
-                        fail validation.
+        Returns a list of warning/error messages instead of raising,
+        so the app can start for health checks even if some config
+        is missing. Callers can decide whether to block startup.
+
+        Returns:
+            List[str]: List of validation messages (empty if all good).
         """
-        errors = []
+        messages = []
 
         # JWT secret must be long enough to prevent brute-force
-        if len(self.jwt_secret) < 32:
-            errors.append("JWT_SECRET must be at least 32 characters long")
+        if self.jwt_secret is None:
+            messages.append("JWT_SECRET is not set — authentication will be disabled")
+        elif len(self.jwt_secret) < 32:
+            messages.append("JWT_SECRET must be at least 32 characters long")
 
         # Supabase URL must use HTTPS in production
-        if self.environment == "production":
+        if self.supabase_url is None:
+            messages.append("SUPABASE_URL is not set — database features will be unavailable")
+        elif self.environment == "production":
             if not self.supabase_url.startswith("https://"):
-                errors.append("SUPABASE_URL must use HTTPS in production")
+                messages.append("SUPABASE_URL must use HTTPS in production")
 
-        # Validate URLs are well-formed
+        # Validate URLs are well-formed (skip if None)
         for name, url in [
             ("BRAIN_URL", self.brain_url),
             ("LLM_URL", self.llm_url),
             ("SKILL_URL", self.skill_url),
-            ("SUPABASE_URL", self.supabase_url),
         ]:
-            if not url.startswith(("http://", "https://")):
-                errors.append(f"{name} must start with http:// or https://")
+            if url and not url.startswith(("http://", "https://")):
+                messages.append(f"{name} must start with http:// or https://")
 
-        if errors:
-            raise ValueError("\n".join(errors))
+        if self.supabase_api_key is None:
+            messages.append("SUPABASE_API_KEY is not set — database features will be unavailable")
+        if self.supabase_service_key is None:
+            messages.append("SUPABASE_SERVICE_KEY is not set — admin database features will be unavailable")
+
+        return messages
 
 
 # ── Singleton ──
 settings = Settings()
-settings.validate()
+# NOTE: .validate() is called at app startup in main.py's startup event,
+# so the app can serve health checks even if some optional config is missing.

@@ -45,11 +45,11 @@ RUN useradd -m -u 1000 jarvis && \
     chown -R jarvis:jarvis /app
 USER jarvis
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8000/health', timeout=5)"
+# Health check (uses PORT env var fallback)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import os; import httpx; httpx.get(f'http://localhost:{os.environ.get(\"PORT\", \"8000\")}/health', timeout=5)"
 
 EXPOSE 8000
 
-# Run with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Run with uvicorn using PORT env var (Render sets this) with 8000 as fallback
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 4
